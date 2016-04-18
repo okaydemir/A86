@@ -1,5 +1,5 @@
  jmp start
- input db 13 dup 0
+ input db 13 dup 0 ;input variable
  
 start:
 mov dx, offset input
@@ -12,7 +12,7 @@ mov dx, offset input
   mov cl,[bx]			; cl now contains number of digits
   cmp cl,0
   JE exit
-  add bx,cx
+  add bx,cx ; bx points to end of input
   
     mov dl, 10  ;move \n to dl
      mov ah,02h
@@ -22,8 +22,8 @@ mov dx, offset input
  
 mov dl,b[bx]
 mov ah,02
-int 21h
-dec bx
+int 21h ;print one char
+dec bx ; bx points to previous character
 loop _while
  
   exit:
