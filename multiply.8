@@ -1,0 +1,212 @@
+JMP START
+input db 21 dup(0)
+db 9 dup(0)
+num1 db 0
+db 9 dup(0)
+num2 db 0
+db 19 dup(0)
+result db 0
+endresult db 1 dup(16)
+ans_is db "Answer is: $"
+START:
+
+ call inp ;takes input
+   mov dl, 10  ;move \n to dl
+     mov ah,02h
+
+    int 21h     ;print new line
+ 
+  mov di,offset num1;di points to last byte of n1
+  
+  call usedigit ;converts and stores input in num1
+   call inp ; takes input
+  mov dl, 10  ;move \n to dl
+  mov ah,02h
+    int 21h     ;print new line
+   mov di,offset num2;di points to last byte of num2
+  call usedigit; converts and stores input in num2
+  
+
+
+
+  call multiply ; multiplies numbers byte by byte, stores result in result
+  
+  mov dx,offset ans_is 
+  mov ah,09h
+  int 21h ; prints Answer is:
+   call output ; converts result and prints
+  call exit
+  
+  multiply:
+  
+  
+mov si,offset num2
+inc si
+mov bx, offset result
+inc bx
+mov cl, 10
+call l00p
+ret
+
+l00p:
+dec bx
+
+dec cl
+dec si
+cmp cl,0
+if e ret
+
+
+
+ mov di,offset num1
+ inc di
+
+mov ch, 10
+push bx
+inc bx
+call inner
+pop bx
+
+jmp l00p
+
+
+inner:
+dec bx
+dec ch
+dec di
+cmp ch,0
+IF E ret
+mov al, [di]
+mul b[si]
+
+
+
+add [bx], al
+IF c call chan
+dec bx
+add [bx], ah
+IF c call chan
+inc bx
+
+jmp inner
+
+chan:
+push bx
+call carry_handle
+pop bx
+ret
+
+carry_handle:;loop in case adding carry also gives carry out
+dec bx
+add B[bx], 1
+if NC ret
+jmp carry_handle
+ 
+ 
+ 
+ 
+ usedigit:
+    mov ax,0
+
+  dec cl
+  cmp cl,0
+	IF e ret
+    dec bx			
+	
+	
+    mov dl,[bx]
+	sub dl,48
+	cmp dl,10
+	if G sub dl,7
+	mov al,dl
+	
+	
+	
+	 dec cl
+  cmp cl,0
+	IF E mov [di], al
+	 cmp cl,0
+	IF E ret
+    dec bx			
+	
+	mov dl,[bx]
+	sub dl,48
+	cmp dl,10
+	if G sub dl,7
+	shl dl, 4
+	
+	add al,dl
+	
+	mov [di], al
+	dec di
+	jmp usedigit
+	
+
+		inp:
+mov dx,offset input
+  mov bx,dx
+  mov b[bx],19			; maximum 18 characters to read
+  mov ah,0ah
+  int 21h
+  mov bx,offset input +1
+  mov cx,0
+  mov cl,[bx]			; cl now contains number of digits
+    
+  add bx,cx ;bx points to end
+  inc bx
+  inc cl  
+ret
+
+ 
+output:
+mov bx, offset result
+sub bx, 20
+
+get_first:
+inc bx
+cmp b[bx],0
+if E jmp get_first
+mov al, b[bx]
+shr al,4
+cmp al,0
+if e jmp leading_zero
+jmp pr_loop
+
+leading_zero:;removes leading zero
+mov al, b[bx]
+cmp al,9
+IF G add al,7
+add al,48
+mov dl,al
+mov ah,02
+int 21h
+inc bx
+
+pr_loop:
+
+cmp b[bx],16 ; if bx points to endresult byte(initially 16), it must stop
+if e ret
+mov al,b[bx]
+push ax
+shr al,4
+cmp al,9
+IF G add al,7
+add al,48
+mov dl,al
+mov ah,02
+int 21h
+pop ax
+and al,00001111b
+cmp al,9
+IF G add al,7
+add al,48
+mov dl,al
+mov ah,02
+int 21h
+inc bx
+jmp pr_loop
+ 
+exit:
+  mov ah,4ch
+  mov al,00		  ; Exit code 0
+  int 21h
